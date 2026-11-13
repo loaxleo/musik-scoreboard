@@ -3,136 +3,320 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Übungs-Scoreboard</title>
+    <title>Musik-Scoreboard | PHSG</title>
+    <!-- Moderne, saubere Schriftart (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg: #0f172a; --card: #1e293b; --accent: #38bdf8;
-            --gold: #fbbf24; --silver: #cbd5e1; --bronze: #d97706; --text: #f8fafc;
+            /* PHSG Corporate Design Farben (Light Mode) */
+            --bg-color: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text-main: #1A1A1A;
+            --text-muted: #666666;
+            --border-color: #E2E8F0;
+            --phsg-green: #10B981; /* Frisches PHSG-Akzentgrün */
+            --phsg-dark-green: #064E3B;
+            --podium-1: #D97706; /* Gold */
+            --podium-2: #64748B; /* Silber */
+            --podium-3: #B45309; /* Bronze */
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
+
+        /* Automatischer Dark Mode (oder erzwungen via System) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0F172A;
+                --card-bg: #1E293B;
+                --text-main: #F8FAFC;
+                --text-muted: #94A3B8;
+                --border-color: #334155;
+                --phsg-green: #34D399;
+                --phsg-dark-green: #065F46;
+                --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: var(--bg); color: var(--text);
-            margin: 0; padding: 30px 20px;
-            display: flex; flex-direction: column; align-items: center;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2.5rem 1rem;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
-        h1 { margin: 0 0 8px; font-size: 2.2rem; text-align: center; }
-        .subtitle { color: #94a3b8; margin-bottom: 24px; font-size: 0.95rem; }
-        .controls { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; }
-        button {
-            background: var(--card); color: var(--text); border: 1px solid #334155;
-            padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600;
-            transition: all 0.2s;
+
+        .container {
+            width: 100%;
+            max-width: 800px;
         }
-        button.active { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        .last-update {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Podium Sektion */
         .podium {
-            display: flex; align-items: flex-end; justify-content: center;
-            gap: 16px; margin-bottom: 36px; width: 100%; max-width: 650px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+            align-items: end;
         }
-        .podium-item {
-            background: var(--card); border-radius: 12px 12px 0 0; padding: 20px 14px;
-            text-align: center; flex: 1; border-top: 4px solid;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+
+        .podium-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: relative;
         }
-        .p1 { height: 150px; border-color: var(--gold); order: 2; }
-        .p2 { height: 120px; border-color: var(--silver); order: 1; }
-        .p3 { height: 100px; border-color: var(--bronze); order: 3; }
-        .medal { font-size: 1.8rem; margin-bottom: 6px; }
-        .p-name { font-weight: bold; font-size: 1.1rem; word-break: break-word; }
-        .p-val { color: var(--accent); font-weight: 700; margin-top: 6px; }
-        .board {
-            width: 100%; max-width: 650px; background: var(--card);
-            border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+
+        .podium-card.rank-1 {
+            order: 2;
+            transform: translateY(-10px);
+            border-color: var(--phsg-green);
         }
-        .row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 20px; border-bottom: 1px solid #334155;
+
+        .podium-card.rank-2 {
+            order: 1;
         }
-        .row:last-child { border-bottom: none; }
-        .rank { width: 36px; color: #94a3b8; font-weight: bold; }
-        .name { flex: 1; font-weight: 500; }
-        .stats { text-align: right; }
-        .main-stat { font-weight: 700; color: var(--accent); font-size: 1.1rem; }
-        .sub-stat { font-size: 0.85rem; color: #94a3b8; }
+
+        .podium-card.rank-3 {
+            order: 3;
+        }
+
+        .rank-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            background: var(--border-color);
+            color: var(--text-main);
+        }
+
+        .rank-1 .rank-badge {
+            background-color: var(--phsg-green);
+            color: #FFFFFF;
+        }
+
+        .podium-name {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .podium-score {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--phsg-green);
+        }
+
+        .podium-units {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Rangliste Tabelle */
+        .table-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            background-color: var(--bg-color);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .col-rank {
+            width: 10%;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .col-name {
+            width: 50%;
+            font-weight: 500;
+        }
+
+        .col-minutes, .col-units {
+            width: 20%;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .col-minutes {
+            font-weight: 600;
+            color: var(--phsg-green);
+        }
+
+        @media (max-width: 640px) {
+            .podium {
+                grid-template-columns: 1fr;
+            }
+            .podium-card.rank-1 {
+                transform: none;
+                order: 1;
+            }
+            .podium-card.rank-2 { order: 2; }
+            .podium-card.rank-3 { order: 3; }
+        }
     </style>
 </head>
 <body>
 
-    <h1>🎶 Übungs-Highscore</h1>
-    <div class="subtitle" id="updated">Lade Daten...</div>
+    <div class="container">
+        <header>
+            <h1>Musik-Scoreboard LG26</h1>
+            <div class="last-update" id="update-time">Lade Daten...</div>
+        </header>
 
-    <div class="controls">
-        <button class="active" onclick="setMode('minuten', this)">⏱️ TOTAL Minuten</button>
-        <button onclick="setMode('einheiten', this)">🔥 TOTAL Einheiten</button>
+        <!-- Dynamisches Podium für Platz 1-3 -->
+        <div class="podium" id="podium-container">
+            <!-- Wird per JavaScript befüllt -->
+        </div>
+
+        <!-- Vollständige Rangliste -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-rank">Rang</th>
+                        <th class="col-name">Name</th>
+                        <th class="col-minutes">Minuten</th>
+                        <th class="col-units">Einheiten</th>
+                    </tr>
+                </thead>
+                <tbody id="scoreboard-body">
+                    <!-- Wird per JavaScript befüllt -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="podium" id="podium"></div>
-    <div class="board" id="board"></div>
-
     <script>
-        let rawData = [];
-        let mode = 'minuten';
-
-        function setMode(newMode, btn) {
-            mode = newMode;
-            document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            render();
-        }
-
         async function loadData() {
             try {
-                // Cache-Buster (?t=...), damit GitHub Pages immer die neuste JSON lädt
-                const res = await fetch('data.json?t=' + Date.now());
-                const json = await res.json();
-                rawData = json.entries || [];
-                document.getElementById('updated').textContent = 'Letztes Update: ' + json.updated_at;
-                render();
-            } catch (e) {
-                console.error(e);
+                const response = await fetch('data.json?t=' + new Date().getTime());
+                if (!response.ok) throw new Error('Daten konnten nicht geladen werden.');
+                
+                const data = await response.json();
+                document.getElementById('update-time').innerText = `Stand: ${data.updated_at}`;
+
+                // Sortieren nach Minuten (absteigend)
+                const entries = data.entries.sort((a, b) => b.minuten - a.minuten);
+
+                renderPodium(entries.slice(0, 3));
+                renderTable(entries);
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('update-time').innerText = 'Fehler beim Laden der Daten.';
             }
         }
 
-        function render() {
-            const sorted = [...rawData].sort((a, b) => b[mode] - a[mode]);
-            const podiumEl = document.getElementById('podium');
-            const boardEl = document.getElementById('board');
+        function renderPodium(top3) {
+            const container = document.getElementById('podium-container');
+            container.innerHTML = '';
 
-            // Top 3 Podium
-            const top3 = [sorted[0], sorted[1], sorted[2]];
-            const classes = ['p1', 'p2', 'p3'];
-            const medals = ['🥇', '🥈', '🥉'];
+            // Reihenfolge für optisches Podest: 2. Platz, 1. Platz, 3. Platz
+            const order = [1, 0, 2];
+            
+            order.forEach(index => {
+                if (!top3[index]) return;
+                const entry = top3[index];
+                const rank = index + 1;
 
-            podiumEl.innerHTML = top3.map((item, i) => {
-                if (!item) return '';
-                const val = mode === 'minuten' ? `${item.minuten} Min` : `${item.einheiten} Einh.`;
-                return `
-                    <div class="podium-item ${classes[i]}">
-                        <div class="medal">${medals[i]}</div>
-                        <div class="p-name">${item.name}</div>
-                        <div class="p-val">${val}</div>
-                    </div>
+                const card = document.createElement('div');
+                card.className = `podium-card rank-${rank}`;
+                card.innerHTML = `
+                    <div class="rank-badge">${rank}. Platz</div>
+                    <div class="podium-name" title="${entry.name}">${entry.name}</div>
+                    <div class="podium-score">${entry.minuten} <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted);">min</span></div>
+                    <div class="podium-units">${entry.einheiten} Einheiten</div>
                 `;
-            }).join('');
-
-            // Komplette Liste
-            boardEl.innerHTML = sorted.map((item, idx) => {
-                const primary = mode === 'minuten' ? `${item.minuten} Min` : `${item.einheiten} Einheiten`;
-                const secondary = mode === 'minuten' ? `${item.einheiten} Einheiten` : `${item.minuten} Min`;
-                return `
-                    <div class="row">
-                        <span class="rank">#${idx + 1}</span>
-                        <span class="name">${item.name}</span>
-                        <div class="stats">
-                            <div class="main-stat">${primary}</div>
-                            <div class="sub-stat">${secondary}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                container.appendChild(card);
+            });
         }
 
+        function renderTable(entries) {
+            const tbody = document.getElementById('scoreboard-body');
+            tbody.innerHTML = '';
+
+            entries.forEach((entry, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="col-rank">${index + 1}</td>
+                    <td class="col-name">${entry.name}</td>
+                    <td class="col-minutes">${entry.minuten} min</td>
+                    <td class="col-units">${entry.einheiten}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Initial laden & alle 30 Sekunden aktualisieren
         loadData();
-        setInterval(loadData, 15000); // Alle 15 Sekunden aktualisieren
+        setInterval(loadData, 30000);
     </script>
 </body>
 </html>
