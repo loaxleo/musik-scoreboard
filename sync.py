@@ -36,6 +36,8 @@ def read_excel():
 def git_push():
     subprocess.run(["git", "add", "data.json"], cwd=REPO_PATH, check=True)
     subprocess.run(["git", "commit", "-m", "Auto-Update Scoreboard"], cwd=REPO_PATH, check=True)
+    # Holt Änderungen, die von anderswo gepusht wurden (z. B. neues Design), bevor hochgeladen wird
+    subprocess.run(["git", "pull", "--rebase", "--autostash"], cwd=REPO_PATH, check=True)
     subprocess.run(["git", "push"], cwd=REPO_PATH, check=True)
 
 def main():
