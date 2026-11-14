@@ -222,11 +222,72 @@
         </div>
     </div>
 
-    <script>
+<script>
         async function loadData() {
             try {
+                // Einzigartiger Timestamp, damit der Browser kein gecachtes JSON lädt
                 const response = await fetch('data.json?t=' + new Date().getTime());
-                if (!response.ok) throw new Error('Daten konnten nicht geladen werden.');
+                if (!response.ok) throw new Error('Netzwerk-Antwort war nicht ok: ' + response.status);
                 
                 const data = await response.json();
-                document.getElementById('update-time
+                console.log("Daten erfolgreich geladen:", data);
+
+                document.getElementById('update-time').innerText = `Stand: ${data.updated_at}`;
+
+                // Einträge nach Minuten absteigend sortieren
+                const entries = data.entries.sort((a, b) => b.minuten - a.minuten);
+
+                renderPodium(entries.slice(0, 3));
+                renderTable(entries);
+
+            } catch (error) {
+                console.error("Fehler beim Laden:", error);
+                document.getElementById('update-time').innerText = 'Fehler beim Laden der Daten.';
+            }
+        }
+
+        function renderPodium(top3) {
+            const container = document.getElementById('podium-container');
+            if (!container) return;
+            container.innerHTML = '';
+            const order = [1, 0, 2]; // 2. Platz, 1. Platz, 3. Platz
+            
+            order.forEach(index => {
+                if (!top3[index]) return;
+                const entry = top3[index];
+                const rank = index + 1;
+
+                const card = document.createElement('div');
+                card.className = `podium-card rank-${rank}`;
+                card.innerHTML = `
+                    <div class="rank-badge">${rank}. Platz</div>
+                    <div class="podium-name" title="${entry.name}">${entry.name}</div>
+                    <div class="podium-score">${entry.minuten} <span style="font-size: 0.8rem; font-weight: 400; color: var(--text-muted);">min</span></div>
+                    <div class="podium-units">${entry.einheiten} Einheiten</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderTable(entries) {
+            const tbody = document.getElementById('scoreboard-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            entries.forEach((entry, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="col-rank">${index + 1}</td>
+                    <td class="col-name">${entry.name}</td>
+                    <td class="col-minutes">${entry.minuten} min</td>
+                    <td class="col-units">${entry.einheiten}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Direkt beim Start laden
+        loadData();
+        // Alle 30 Sekunden aktualisieren
+        setInterval(loadData, 30000);
+    </script>
