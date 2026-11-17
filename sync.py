@@ -75,20 +75,46 @@ def unpushed_commits():
     return r.returncode == 0 and r.stdout.strip() not in ("", "0")
 
 
+def week_id(d=None):
+    y, w, _ = (d or datetime.now()).isocalendar()
+    return f"{y}-W{w:02d}", w
+
+
 def publish(entries):
     # 1. Zuerst Änderungen von GitHub holen (z. B. neues Design)
     git("pull", "--rebase", "--autostash")
 
-    # 2. data.json schreiben
-    payload = {"updated_at": datetime.now().strftime("%d.%m.%Y %H:%M:%S"), "entries": entries}
+    # 2. Wochen-Basis: Gesamtstände zu Beginn der aktuellen Kalenderwoche.
+    #    Beim ersten Push einer neuen Woche wird der letzte Stand der Vorwoche zur Basis.
+    try:
+        old = json.loads(JSON_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        old = {}
+    wid, kw = week_id()
+    week = old.get("week") or {}
+    if week.get("id") != wid:
+        week = {
+            "id": wid,
+            "kw": kw,
+            "baseline": {e["name"]: {"minuten": e["minuten"], "einheiten": e["einheiten"]}
+                         for e in old.get("entries", [])},
+        }
+        log.info("Neue Woche %s – Basis gesetzt", wid)
+
+    # 3. data.json schreiben
+    payload = {
+        "updated_at": datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
+        "entries": entries,
+        "week": week,
+    }
     JSON_PATH.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    # 3. Nur committen, wenn sich wirklich etwas geändert hat
+    # 4. Nur committen, wenn sich wirklich etwas geändert hat
     git("add", "data.json")
     if git("diff", "--cached", "--quiet", check=False).returncode != 0:
         git("commit", "-m", "Auto-Update Scoreboard")
 
-    # 4. Pushen (auch Commits, die beim letzten Mal hängen geblieben sind)
+    # 5. Pushen (auch Commits, die beim letzten Mal hängen geblieben sind)
     git("push")
     log.info("Update gepusht (Stand %s)", payload["updated_at"])
 

@@ -46,5 +46,43 @@
       "minuten": 20,
       "einheiten": 1
     }
-  ]
+  ],
+  "week": {
+    "id": "2026-W47",
+    "kw": 47,
+    "baseline": {
+      "Lausbub80": {
+        "minuten": 70,
+        "einheiten": 3
+      },
+      "Pikachu77": {
+        "minuten": 65,
+        "einheiten": 5
+      },
+      "Zuversicht777": {
+        "minuten": 0,
+        "einheiten": 0
+      },
+      "Drizzt83": {
+        "minuten": 90,
+        "einheiten": 6
+      },
+      "Gohan9": {
+        "minuten": 15,
+        "einheiten": 1
+      },
+      "Obstsalat23": {
+        "minuten": 130,
+        "einheiten": 7
+      },
+      "Lisi": {
+        "minuten": 75,
+        "einheiten": 7
+      },
+      "Mango7": {
+        "minuten": 80,
+        "einheiten": 4
+      }
+    }
+  }
 }

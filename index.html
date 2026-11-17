@@ -87,9 +87,21 @@
         td { padding: 0.95rem 0.5rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
         .c-rank { width: 3.5rem; font-variant-numeric: tabular-nums; }
         .c-name { color: var(--text-strong); font-weight: 500; }
-        .c-min { width: 40%; }
-        .c-units { width: 6.5rem; text-align: right; font-variant-numeric: tabular-nums; }
-        th.c-units { text-align: right; }
+        .c-min, .c-units { width: 30%; }
+        .sort {
+            font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit;
+            background: none; border: 0; padding: 0; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+        }
+        .sort::after { content: '↓'; opacity: 0.25; }
+        .sort:hover { color: var(--text-strong); }
+        th.active .sort { color: var(--green); font-weight: 600; }
+        th.active .sort::after { opacity: 1; }
+        .sort:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+        td.c-min .bar, td.c-units .bar { visibility: hidden; }
+        td.active .bar { visibility: visible; }
+        td.active .bar-num { font-weight: 600; }
+        .hint { font-size: 0.85rem; margin: -0.75rem 0 1.25rem; }
         .bar-row { display: flex; align-items: center; gap: 0.75rem; }
         .bar { flex: 1; height: 6px; background: var(--bg-soft); }
         .bar > i { display: block; height: 100%; background: var(--green); }
@@ -109,10 +121,13 @@
             .podium-card { min-height: 0; flex-direction: row; align-items: center; gap: 1rem; justify-content: flex-start; padding: 1rem 1.25rem; }
             .podium-rank { font-size: 2rem; width: 2rem; }
             .podium-name { margin-top: 0; }
-            .c-min { width: auto; }
+            .c-min, .c-units { width: auto; }
+            th { font-size: 0.7rem; letter-spacing: 0.02em; padding: 0.75rem 0.3rem; }
+            td { padding: 0.85rem 0.3rem; }
+            .c-rank { width: 2.25rem; }
+            .sort { gap: 0.2rem; }
             .bar { display: none; }
             .bar-num { width: auto; }
-            .c-units { width: 4.5rem; }
         }
     </style>
 </head>
@@ -145,14 +160,15 @@
             <div class="podium" id="podium"></div>
         </section>
         <section>
-            <h2>Rangliste</h2>
+            <h2>Rangliste <span id="kw">der Woche</span></h2>
+            <p class="hint" id="week-hint">Minuten und Einheiten dieser Kalenderwoche (Mo–So)</p>
             <table>
                 <thead>
                     <tr>
                         <th class="c-rank">Rang</th>
                         <th>Name</th>
-                        <th class="c-min">Minuten</th>
-                        <th class="c-units">Einheiten</th>
+                        <th class="c-min" data-key="minuten"><button class="sort" type="button">Minuten</button></th>
+                        <th class="c-units" data-key="einheiten"><button class="sort" type="button">Einheiten</button></th>
                     </tr>
                 </thead>
                 <tbody id="board"></tbody>
@@ -174,33 +190,76 @@
             return n;
         };
 
-        // Gleiche Minuten = gleicher Rang (1, 2, 2, 4 …)
-        function withRanks(entries) {
+        let lastData = null;
+        let sortKey = 'minuten';
+        const other = k => (k === 'minuten' ? 'einheiten' : 'minuten');
+
+        // Gleicher Wert = gleicher Rang (1, 2, 2, 4 …)
+        function rankBy(entries, key) {
+            const sorted = [...entries].sort((a, b) =>
+                b[key] - a[key] || b[other(key)] - a[other(key)] || a.name.localeCompare(b.name, 'de'));
             let rank = 0;
-            return entries.map((e, i) => {
-                if (i === 0 || e.minuten !== entries[i - 1].minuten) rank = i + 1;
+            return sorted.map((e, i) => {
+                if (i === 0 || e[key] !== sorted[i - 1][key]) rank = i + 1;
                 return { ...e, rang: rank };
             });
+        }
+
+        // ISO-Kalenderwoche (Mo–So), wie in sync.py
+        function isoWeek(d) {
+            const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            const day = t.getUTCDay() || 7;
+            t.setUTCDate(t.getUTCDate() + 4 - day);
+            const y = t.getUTCFullYear();
+            const w = Math.ceil(((t - Date.UTC(y, 0, 1)) / 864e5 + 1) / 7);
+            return { kw: w, id: y + '-W' + String(w).padStart(2, '0') };
+        }
+
+        // Wochenwerte = Gesamtstand jetzt − Gesamtstand zu Wochenbeginn
+        function weekly(data) {
+            const now = isoWeek(new Date());
+            const week = data.week;
+            const current = week && week.id === now.id;   // sonst: neue Woche, noch keine Einträge
+            return {
+                kw: now.kw,
+                entries: data.entries.map(e => {
+                    const b = current ? (week.baseline[e.name] || { minuten: 0, einheiten: 0 }) : e;
+                    return {
+                        name: e.name,
+                        minuten: Math.max(0, e.minuten - b.minuten),
+                        einheiten: Math.max(0, e.einheiten - b.einheiten),
+                    };
+                }),
+            };
         }
 
         async function loadData() {
             try {
                 const res = await fetch('data.json?t=' + Date.now());
                 if (!res.ok) throw new Error('HTTP ' + res.status);
-                const data = await res.json();
-                const entries = withRanks([...data.entries].sort((a, b) => b.minuten - a.minuten || b.einheiten - a.einheiten));
-
-                document.getElementById('update-time').textContent = 'Stand: ' + data.updated_at;
-                document.getElementById('s-min').textContent = entries.reduce((s, e) => s + e.minuten, 0);
-                document.getElementById('s-units').textContent = entries.reduce((s, e) => s + e.einheiten, 0);
-                document.getElementById('s-people').textContent = entries.length;
-
-                renderPodium(entries.slice(0, 3));
-                renderTable(entries);
+                lastData = await res.json();
+                render();
             } catch (err) {
                 console.error(err);
                 document.getElementById('update-time').textContent = 'Daten konnten nicht geladen werden';
             }
+        }
+
+        function render() {
+            const data = lastData;
+            if (!data) return;
+            const total = rankBy(data.entries, 'minuten');
+
+            document.getElementById('update-time').textContent = 'Stand: ' + data.updated_at;
+            document.getElementById('s-min').textContent = total.reduce((s, e) => s + e.minuten, 0);
+            document.getElementById('s-units').textContent = total.reduce((s, e) => s + e.einheiten, 0);
+            document.getElementById('s-people').textContent = total.length;
+
+            renderPodium(total.slice(0, 3));   // Podest: immer Gesamtstand
+
+            const wk = weekly(data);
+            document.getElementById('kw').textContent = 'KW' + wk.kw;
+            renderTable(rankBy(wk.entries, sortKey));
         }
 
         function renderPodium(top3) {
@@ -217,29 +276,45 @@
             });
         }
 
+        function cell(cls, key, value, max, suffix) {
+            const td = el('td', cls + (key === sortKey ? ' active' : ''));
+            const row = el('div', 'bar-row');
+            const bar = el('div', 'bar');
+            const fill = el('i');
+            fill.style.width = (value / max * 100) + '%';
+            bar.append(fill);
+            row.append(bar, el('span', 'bar-num', value + suffix));
+            td.append(row);
+            return td;
+        }
+
         function renderTable(entries) {
             const body = document.getElementById('board');
-            const max = Math.max(1, ...entries.map(e => e.minuten));
+            const maxMin = Math.max(1, ...entries.map(e => e.minuten));
+            const maxUnits = Math.max(1, ...entries.map(e => e.einheiten));
             body.innerHTML = '';
             entries.forEach(e => {
-                const tr = el('tr', e.rang <= 3 ? 'top' : '');
+                const top = e.rang <= 3 && e[sortKey] > 0;
+                const tr = el('tr', top ? 'top' : '');
                 tr.append(el('td', 'c-rank', e.rang));
                 tr.append(el('td', 'c-name', e.name));
-
-                const tdMin = el('td', 'c-min');
-                const row = el('div', 'bar-row');
-                const bar = el('div', 'bar');
-                const fill = el('i');
-                fill.style.width = (e.minuten / max * 100) + '%';
-                bar.append(fill);
-                row.append(bar, el('span', 'bar-num', e.minuten + ' min'));
-                tdMin.append(row);
-                tr.append(tdMin);
-
-                tr.append(el('td', 'c-units', e.einheiten));
+                tr.append(cell('c-min', 'minuten', e.minuten, maxMin, ' min'));
+                tr.append(cell('c-units', 'einheiten', e.einheiten, maxUnits, ''));
                 body.append(tr);
             });
+            document.querySelectorAll('th[data-key]').forEach(th => {
+                const on = th.dataset.key === sortKey;
+                th.classList.toggle('active', on);
+                th.setAttribute('aria-sort', on ? 'descending' : 'none');
+            });
         }
+
+        document.querySelectorAll('th[data-key] .sort').forEach(btn => {
+            btn.addEventListener('click', () => {
+                sortKey = btn.parentElement.dataset.key;
+                render();
+            });
+        });
 
         loadData();
         setInterval(loadData, 60000);
