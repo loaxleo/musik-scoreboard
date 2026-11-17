@@ -20,7 +20,8 @@ EXCEL_PATH = Path(r"C:\Users\loale\OneDrive - PHSG\Shortcuts\High Score _Singen&
 REPO_PATH = Path(__file__).resolve().parent
 JSON_PATH = REPO_PATH / "data.json"
 LOG_PATH = REPO_PATH / "sync.log"
-INTERVAL = 600  # Sekunden zwischen zwei Prüfungen (10 Minuten)
+POLL = 15    # alle 15 s nur den Zeitstempel der Excel anschauen (kostet nichts)
+QUIET = 120  # erst pushen, wenn die Excel 2 Minuten lang nicht mehr verändert wurde
 
 logging.basicConfig(
     level=logging.INFO,
@@ -93,21 +94,29 @@ def publish(entries):
 
 
 def main():
-    log.info("Überwache %s", EXCEL_PATH.name)
+    log.info("Überwache %s (Push %d s nach der letzten Änderung)", EXCEL_PATH.name, QUIET)
     last_mtime = None
+    changed_at = time.time() - QUIET   # beim Start sofort einmal abgleichen
+    pending = True
     retry = unpushed_commits()  # hängengebliebene Commits vom letzten Mal?
     while True:
         try:
             mtime = EXCEL_PATH.stat().st_mtime
-            if mtime != last_mtime or retry:
+            if mtime != last_mtime:
+                if last_mtime is not None and not pending:
+                    log.info("Excel wird bearbeitet – warte, bis 2 Minuten Ruhe ist")
+                last_mtime = mtime
+                changed_at = time.time()
+                pending = True
+
+            quiet_long_enough = time.time() - changed_at >= QUIET
+            if (pending and quiet_long_enough) or retry:
                 entries = read_excel()
                 if entries != published_entries() or retry:
-                    if not retry:
-                        log.info("Änderung in der Excel erkannt")
                     retry = True   # bleibt True, bis der Push geklappt hat
                     publish(entries)
                     retry = False
-                last_mtime = mtime
+                pending = False
         except PermissionError:
             pass  # OneDrive schreibt gerade -> beim nächsten Durchlauf
         except subprocess.CalledProcessError as e:
@@ -115,7 +124,7 @@ def main():
             time.sleep(60)  # bei Netz-/Git-Problemen nicht im Sekundentakt hämmern
         except Exception as e:
             log.error("Fehler: %r", e)
-        time.sleep(INTERVAL)
+        time.sleep(POLL)
 
 
 if __name__ == "__main__":
