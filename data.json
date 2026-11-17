@@ -1,5 +1,5 @@
 {
-  "updated_at": "14.11.2026 02:31:08",
+  "updated_at": "17.11.2026 10:01:36",
   "entries": [
     {
       "name": "Lausbub80",
@@ -8,8 +8,8 @@
     },
     {
       "name": "Pikachu77",
-      "minuten": 65,
-      "einheiten": 5
+      "minuten": 80,
+      "einheiten": 6
     },
     {
       "name": "Zuversicht777",
@@ -18,8 +18,8 @@
     },
     {
       "name": "Drizzt83",
-      "minuten": 90,
-      "einheiten": 6
+      "minuten": 135,
+      "einheiten": 9
     },
     {
       "name": "Gohan9",
@@ -28,7 +28,7 @@
     },
     {
       "name": "Obstsalat23",
-      "minuten": 130,
+      "minuten": 140,
       "einheiten": 7
     },
     {
@@ -40,6 +40,11 @@
       "name": "Mango7",
       "minuten": 80,
       "einheiten": 4
+    },
+    {
+      "name": "Tamtam97",
+      "minuten": 20,
+      "einheiten": 1
     }
   ]
 }
