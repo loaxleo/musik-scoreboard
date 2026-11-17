@@ -1,5 +1,5 @@
 {
-  "updated_at": "17.11.2026 10:13:38",
+  "updated_at": "17.11.2026 10:44:52",
   "entries": [
     {
       "name": "Lausbub80",
@@ -47,42 +47,456 @@
       "einheiten": 1
     }
   ],
-  "week": {
-    "id": "2026-W47",
-    "kw": 47,
-    "baseline": {
-      "Lausbub80": {
-        "minuten": 70,
-        "einheiten": 3
-      },
-      "Pikachu77": {
-        "minuten": 65,
-        "einheiten": 5
-      },
-      "Zuversicht777": {
-        "minuten": 0,
-        "einheiten": 0
-      },
-      "Drizzt83": {
-        "minuten": 90,
-        "einheiten": 6
-      },
-      "Gohan9": {
-        "minuten": 15,
-        "einheiten": 1
-      },
-      "Obstsalat23": {
-        "minuten": 130,
-        "einheiten": 7
-      },
-      "Lisi": {
-        "minuten": 75,
-        "einheiten": 7
-      },
-      "Mango7": {
-        "minuten": 80,
-        "einheiten": 4
-      }
+  "weeks": [
+    {
+      "kw": 45,
+      "entries": [
+        {
+          "name": "Lausbub80",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Pikachu77",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Zuversicht777",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Drizzt83",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Gohan9",
+          "minuten": 15,
+          "einheiten": 1
+        },
+        {
+          "name": "Obstsalat23",
+          "minuten": 30,
+          "einheiten": 2
+        },
+        {
+          "name": "Lisi",
+          "minuten": 35,
+          "einheiten": 4
+        },
+        {
+          "name": "Mango7",
+          "minuten": 35,
+          "einheiten": 2
+        },
+        {
+          "name": "Tamtam97",
+          "minuten": 0,
+          "einheiten": 0
+        }
+      ]
+    },
+    {
+      "kw": 46,
+      "entries": [
+        {
+          "name": "Lausbub80",
+          "minuten": 70,
+          "einheiten": 3
+        },
+        {
+          "name": "Pikachu77",
+          "minuten": 65,
+          "einheiten": 5
+        },
+        {
+          "name": "Zuversicht777",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Drizzt83",
+          "minuten": 120,
+          "einheiten": 8
+        },
+        {
+          "name": "Gohan9",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Obstsalat23",
+          "minuten": 110,
+          "einheiten": 5
+        },
+        {
+          "name": "Lisi",
+          "minuten": 40,
+          "einheiten": 3
+        },
+        {
+          "name": "Mango7",
+          "minuten": 45,
+          "einheiten": 2
+        },
+        {
+          "name": "Tamtam97",
+          "minuten": 0,
+          "einheiten": 0
+        }
+      ]
+    },
+    {
+      "kw": 47,
+      "entries": [
+        {
+          "name": "Lausbub80",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Pikachu77",
+          "minuten": 15,
+          "einheiten": 1
+        },
+        {
+          "name": "Zuversicht777",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Drizzt83",
+          "minuten": 15,
+          "einheiten": 1
+        },
+        {
+          "name": "Gohan9",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Obstsalat23",
+          "minuten": 25,
+          "einheiten": 1
+        },
+        {
+          "name": "Lisi",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Mango7",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Tamtam97",
+          "minuten": 20,
+          "einheiten": 1
+        }
+      ]
+    },
+    {
+      "kw": 48,
+      "entries": [
+        {
+          "name": "Lausbub80",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Pikachu77",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Zuversicht777",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Drizzt83",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Gohan9",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Obstsalat23",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Lisi",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Mango7",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Tamtam97",
+          "minuten": 0,
+          "einheiten": 0
+        }
+      ]
+    },
+    {
+      "kw": 49,
+      "entries": [
+        {
+          "name": "Lausbub80",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Pikachu77",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Zuversicht777",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Drizzt83",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Gohan9",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Obstsalat23",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Lisi",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Mango7",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Tamtam97",
+          "minuten": 0,
+          "einheiten": 0
+        }
+      ]
+    },
+    {
+      "kw": 50,
+      "entries": [
+        {
+          "name": "Lausbub80",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Pikachu77",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Zuversicht777",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Drizzt83",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Gohan9",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Obstsalat23",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Lisi",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Mango7",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Tamtam97",
+          "minuten": 0,
+          "einheiten": 0
+        }
+      ]
+    },
+    {
+      "kw": 51,
+      "entries": [
+        {
+          "name": "Lausbub80",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Pikachu77",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Zuversicht777",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Drizzt83",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Gohan9",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Obstsalat23",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Lisi",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Mango7",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Tamtam97",
+          "minuten": 0,
+          "einheiten": 0
+        }
+      ]
+    },
+    {
+      "kw": 52,
+      "entries": [
+        {
+          "name": "Lausbub80",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Pikachu77",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Zuversicht777",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Drizzt83",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Gohan9",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Obstsalat23",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Lisi",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Mango7",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Tamtam97",
+          "minuten": 0,
+          "einheiten": 0
+        }
+      ]
+    },
+    {
+      "kw": 53,
+      "entries": [
+        {
+          "name": "Lausbub80",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Pikachu77",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Zuversicht777",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Drizzt83",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Gohan9",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Obstsalat23",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Lisi",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Mango7",
+          "minuten": 0,
+          "einheiten": 0
+        },
+        {
+          "name": "Tamtam97",
+          "minuten": 0,
+          "einheiten": 0
+        }
+      ]
     }
-  }
+  ]
 }
