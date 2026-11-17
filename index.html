@@ -102,6 +102,21 @@
         td.active .bar { visibility: visible; }
         td.active .bar-num { font-weight: 600; }
         .hint { font-size: 0.85rem; margin: -0.75rem 0 1.25rem; }
+        .past { border-top: 1px solid var(--line); }
+        .past:last-child { border-bottom: 1px solid var(--line); }
+        .past summary {
+            list-style: none; cursor: pointer; padding: 1.1rem 0.5rem;
+            display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+        }
+        .past summary::-webkit-details-marker { display: none; }
+        .past-title { font-family: var(--serif); font-weight: 300; font-size: 1.25rem; color: var(--text-strong); }
+        .past-title::before { content: '+'; display: inline-block; width: 1.25rem; color: var(--green); font-family: var(--sans); }
+        .past[open] .past-title::before { content: '–'; }
+        .past-winner { font-size: 0.9rem; }
+        .past summary:hover .past-title { color: var(--green); }
+        .past summary:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+        .past table { margin-bottom: 1.5rem; }
+        .empty { padding: 1rem 0.5rem; }
         .bar-row { display: flex; align-items: center; gap: 0.75rem; }
         .bar { flex: 1; height: 6px; background: var(--bg-soft); }
         .bar > i { display: block; height: 100%; background: var(--green); }
@@ -162,17 +177,11 @@
         <section>
             <h2>Rangliste <span id="kw">der Woche</span></h2>
             <p class="hint" id="week-hint">Minuten und Einheiten dieser Kalenderwoche (Mo–So)</p>
-            <table>
-                <thead>
-                    <tr>
-                        <th class="c-rank">Rang</th>
-                        <th>Name</th>
-                        <th class="c-min" data-key="minuten"><button class="sort" type="button">Minuten</button></th>
-                        <th class="c-units" data-key="einheiten"><button class="sort" type="button">Einheiten</button></th>
-                    </tr>
-                </thead>
-                <tbody id="board"></tbody>
-            </table>
+            <div id="current-table"></div>
+        </section>
+        <section id="past-section" hidden>
+            <h2>Vergangene Wochen</h2>
+            <div id="past-list"></div>
         </section>
     </main>
 
@@ -215,21 +224,17 @@
             return { kw: w, id: y + '-W' + String(w).padStart(2, '0') };
         }
 
-        // Wochenwerte = Gesamtstand jetzt − Gesamtstand zu Wochenbeginn
-        function weekly(data) {
-            const now = isoWeek(new Date());
-            const week = data.week;
-            const current = week && week.id === now.id;   // sonst: neue Woche, noch keine Einträge
+        // Wochen kommen direkt aus den KW-Spalten der Excel (data.weeks, in Spalten-Reihenfolge)
+        function splitWeeks(data) {
+            const now = isoWeek(new Date()).kw;
+            const weeks = data.weeks || [];
+            const idx = weeks.findIndex(w => w.kw === now);
+            const zero = data.entries.map(e => ({ name: e.name, minuten: 0, einheiten: 0 }));
+            const hasData = w => w.entries.some(e => e.minuten > 0 || e.einheiten > 0);
             return {
-                kw: now.kw,
-                entries: data.entries.map(e => {
-                    const b = current ? (week.baseline[e.name] || { minuten: 0, einheiten: 0 }) : e;
-                    return {
-                        name: e.name,
-                        minuten: Math.max(0, e.minuten - b.minuten),
-                        einheiten: Math.max(0, e.einheiten - b.einheiten),
-                    };
-                }),
+                kw: now,
+                current: idx >= 0 ? weeks[idx].entries : zero,
+                past: (idx >= 0 ? weeks.slice(0, idx) : weeks.filter(hasData)).reverse(),
             };
         }
 
@@ -257,9 +262,33 @@
 
             renderPodium(total.slice(0, 3));   // Podest: immer Gesamtstand
 
-            const wk = weekly(data);
+            const wk = splitWeeks(data);
             document.getElementById('kw').textContent = 'KW' + wk.kw;
-            renderTable(rankBy(wk.entries, sortKey));
+            const cur = document.getElementById('current-table');
+            cur.replaceChildren(buildTable(rankBy(wk.current, sortKey)));
+
+            renderPast(wk.past);
+        }
+
+        const openWeeks = new Set();   // aufgeklappte Wochen bleiben beim Neuladen offen
+
+        function renderPast(past) {
+            const section = document.getElementById('past-section');
+            const list = document.getElementById('past-list');
+            section.hidden = past.length === 0;
+            list.innerHTML = '';
+            past.forEach(w => {
+                const ranked = rankBy(w.entries, sortKey);
+                const d = el('details', 'past');
+                d.open = openWeeks.has(w.kw);
+                d.addEventListener('toggle', () => d.open ? openWeeks.add(w.kw) : openWeeks.delete(w.kw));
+                const sum = el('summary');
+                sum.append(el('span', 'past-title', 'Rangliste KW' + w.kw));
+                const winners = ranked.filter(e => e.rang === 1 && e[sortKey] > 0).map(e => e.name);
+                sum.append(el('span', 'past-winner', winners.length ? '1. ' + winners.join(', ') : 'keine Einträge'));
+                d.append(sum, buildTable(ranked));
+                list.append(d);
+            });
         }
 
         function renderPodium(top3) {
@@ -288,11 +317,25 @@
             return td;
         }
 
-        function renderTable(entries) {
-            const body = document.getElementById('board');
+        function buildTable(entries) {
+            const table = el('table');
+            const head = el('thead');
+            const hr = el('tr');
+            hr.append(el('th', 'c-rank', 'Rang'), el('th', '', 'Name'));
+            [['minuten', 'c-min', 'Minuten'], ['einheiten', 'c-units', 'Einheiten']].forEach(([key, cls, label]) => {
+                const th = el('th', cls + (key === sortKey ? ' active' : ''));
+                th.dataset.key = key;
+                th.setAttribute('aria-sort', key === sortKey ? 'descending' : 'none');
+                const btn = el('button', 'sort', label);
+                btn.type = 'button';
+                th.append(btn);
+                hr.append(th);
+            });
+            head.append(hr);
+
+            const body = el('tbody');
             const maxMin = Math.max(1, ...entries.map(e => e.minuten));
             const maxUnits = Math.max(1, ...entries.map(e => e.einheiten));
-            body.innerHTML = '';
             entries.forEach(e => {
                 const top = e.rang <= 3 && e[sortKey] > 0;
                 const tr = el('tr', top ? 'top' : '');
@@ -302,18 +345,16 @@
                 tr.append(cell('c-units', 'einheiten', e.einheiten, maxUnits, ''));
                 body.append(tr);
             });
-            document.querySelectorAll('th[data-key]').forEach(th => {
-                const on = th.dataset.key === sortKey;
-                th.classList.toggle('active', on);
-                th.setAttribute('aria-sort', on ? 'descending' : 'none');
-            });
+            table.append(head, body);
+            return table;
         }
 
-        document.querySelectorAll('th[data-key] .sort').forEach(btn => {
-            btn.addEventListener('click', () => {
-                sortKey = btn.parentElement.dataset.key;
-                render();
-            });
+        // Sortierung gilt für alle Tabellen (aktuelle und vergangene Wochen)
+        document.addEventListener('click', ev => {
+            const btn = ev.target.closest('.sort');
+            if (!btn) return;
+            sortKey = btn.parentElement.dataset.key;
+            render();
         });
 
         loadData();

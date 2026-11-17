@@ -8,6 +8,7 @@ Protokoll:        sync.log im selben Ordner
 import json
 import logging
 import os
+import re
 import subprocess
 import time
 from datetime import datetime
@@ -42,29 +43,55 @@ def git(*args, check=True):
     )
 
 
+def num(v):
+    """Zelle -> ganze Zahl (leer/Text = 0)."""
+    try:
+        return int(float(v))
+    except (TypeError, ValueError):
+        return 0
+
+
 def read_excel():
-    # data_only=True liest die berechneten Formel-Ergebnisse (Spalte B & C)
+    """
+    Aufbau der Excel:
+      Zeile 1: Spaltenköpfe, u. a. 'KW47' über den beiden Wochenspalten
+      Zeile 2: 'M' / 'E'
+      ab Zeile 3: Pseudonym (A), Minuten total (B), Einheiten total (C), danach pro Woche M und E
+    """
+    # data_only=True liest die berechneten Formel-Ergebnisse
     wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True, read_only=True)
     sheet = wb.active
+    rows = list(sheet.iter_rows(values_only=True))
+    wb.close()
+
+    # Wochenspalten finden: jede Zelle in Zeile 1 mit 'KW<Zahl>' = Minuten-Spalte, rechts daneben Einheiten
+    header = rows[0] if rows else ()
+    week_cols = []
+    for col, value in enumerate(header):
+        m = re.search(r"KW\s*(\d+)", str(value or ""), re.IGNORECASE)
+        if m:
+            week_cols.append((int(m.group(1)), col))
+
     entries = []
-    # Ab Zeile 3 stehen die Pseudonyme (Zeile 1 & 2 sind Header)
-    for row in sheet.iter_rows(min_row=3, values_only=True):
+    weeks = [{"kw": kw, "entries": []} for kw, _ in week_cols]
+    for row in rows[2:]:  # ab Zeile 3
         name = row[0] if row else None
         if not name or str(name).strip() == "":
             continue
-        entries.append({
-            "name": str(name).strip(),
-            "minuten": int(row[1] or 0),
-            "einheiten": int(row[2] or 0),
-        })
-    wb.close()
-    return entries
+        name = str(name).strip()
+        cell = lambda i: row[i] if i < len(row) else None
+        entries.append({"name": name, "minuten": num(cell(1)), "einheiten": num(cell(2))})
+        for week, (_, col) in zip(weeks, week_cols):
+            week["entries"].append({"name": name, "minuten": num(cell(col)), "einheiten": num(cell(col + 1))})
+
+    return {"entries": entries, "weeks": weeks}
 
 
-def published_entries():
+def published_state():
     """Was aktuell in data.json steht (= was online ist)."""
     try:
-        return json.loads(JSON_PATH.read_text(encoding="utf-8")).get("entries")
+        d = json.loads(JSON_PATH.read_text(encoding="utf-8"))
+        return {"entries": d.get("entries"), "weeks": d.get("weeks")}
     except Exception:
         return None
 
@@ -75,46 +102,20 @@ def unpushed_commits():
     return r.returncode == 0 and r.stdout.strip() not in ("", "0")
 
 
-def week_id(d=None):
-    y, w, _ = (d or datetime.now()).isocalendar()
-    return f"{y}-W{w:02d}", w
-
-
-def publish(entries):
+def publish(state):
     # 1. Zuerst Änderungen von GitHub holen (z. B. neues Design)
     git("pull", "--rebase", "--autostash")
 
-    # 2. Wochen-Basis: Gesamtstände zu Beginn der aktuellen Kalenderwoche.
-    #    Beim ersten Push einer neuen Woche wird der letzte Stand der Vorwoche zur Basis.
-    try:
-        old = json.loads(JSON_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        old = {}
-    wid, kw = week_id()
-    week = old.get("week") or {}
-    if week.get("id") != wid:
-        week = {
-            "id": wid,
-            "kw": kw,
-            "baseline": {e["name"]: {"minuten": e["minuten"], "einheiten": e["einheiten"]}
-                         for e in old.get("entries", [])},
-        }
-        log.info("Neue Woche %s – Basis gesetzt", wid)
-
-    # 3. data.json schreiben
-    payload = {
-        "updated_at": datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
-        "entries": entries,
-        "week": week,
-    }
+    # 2. data.json schreiben
+    payload = {"updated_at": datetime.now().strftime("%d.%m.%Y %H:%M:%S"), **state}
     JSON_PATH.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    # 4. Nur committen, wenn sich wirklich etwas geändert hat
+    # 3. Nur committen, wenn sich wirklich etwas geändert hat
     git("add", "data.json")
     if git("diff", "--cached", "--quiet", check=False).returncode != 0:
         git("commit", "-m", "Auto-Update Scoreboard")
 
-    # 5. Pushen (auch Commits, die beim letzten Mal hängen geblieben sind)
+    # 4. Pushen (auch Commits, die beim letzten Mal hängen geblieben sind)
     git("push")
     log.info("Update gepusht (Stand %s)", payload["updated_at"])
 
@@ -137,10 +138,10 @@ def main():
 
             quiet_long_enough = time.time() - changed_at >= QUIET
             if (pending and quiet_long_enough) or retry:
-                entries = read_excel()
-                if entries != published_entries() or retry:
+                state = read_excel()
+                if state != published_state() or retry:
                     retry = True   # bleibt True, bis der Push geklappt hat
-                    publish(entries)
+                    publish(state)
                     retry = False
                 pending = False
         except PermissionError:
