@@ -20,7 +20,7 @@ EXCEL_PATH = Path(r"C:\Users\loale\OneDrive - PHSG\Shortcuts\High Score _Singen&
 REPO_PATH = Path(__file__).resolve().parent
 JSON_PATH = REPO_PATH / "data.json"
 LOG_PATH = REPO_PATH / "sync.log"
-INTERVAL = 10  # Sekunden zwischen zwei Prüfungen
+INTERVAL = 600  # Sekunden zwischen zwei Prüfungen (10 Minuten)
 
 logging.basicConfig(
     level=logging.INFO,
