@@ -143,7 +143,59 @@
         footer { background: var(--green-dark); color: var(--white); margin-top: 4rem; }
         footer .wrap { padding-top: 1.75rem; padding-bottom: 1.75rem; font-size: 0.85rem; font-weight: 300; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 
+        /* Konto in der Kopfzeile */
+        .account { font-size: 0.85rem; display: flex; gap: 0.5rem; align-items: center; }
+        .account strong { color: var(--text-strong); font-weight: 500; }
+        .link-btn { font: inherit; color: var(--green); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+        .link-btn:hover { color: var(--green-dark); }
+
+        /* Formulare */
+        .btn {
+            font: inherit; font-weight: 500; cursor: pointer; padding: 0.7rem 1.4rem;
+            border: 1px solid var(--green); background: var(--green); color: var(--white);
+        }
+        .btn:hover { background: var(--green-dark); border-color: var(--green-dark); }
+        .btn.ghost { background: var(--white); color: var(--green); }
+        .btn.ghost:hover { background: #E6F5EE; }
+        .btn:disabled { opacity: 0.5; cursor: default; }
+        .btn:focus-visible, .field input:focus-visible, .field select:focus-visible { outline: 2px solid var(--green-dark); outline-offset: 2px; }
+        .field { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.85rem; }
+        .field input, .field select {
+            font: inherit; font-size: 1rem; color: var(--text-strong);
+            padding: 0.65rem 0.75rem; border: 1px solid rgba(0,0,0,0.25); border-radius: 0; background: var(--white);
+        }
+        .msg { font-size: 0.9rem; min-height: 1.4em; margin-top: 0.75rem; }
+        .msg.err { color: #B3261E; }
+        .msg.ok { color: var(--green); }
+
+        /* Eintragen */
+        .entry { background: var(--bg-soft); padding: 1.5rem 1.25rem; }
+        .entry-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; }
+        .mine { margin-top: 1.25rem; font-size: 0.9rem; }
+        .mine-title { font-weight: 500; margin-bottom: 0.4rem; }
+        .mine li { list-style: none; display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-top: 1px solid var(--line); }
+
+        /* Willkommens-Dialog */
+        .overlay { position: fixed; inset: 0; background: rgba(28, 62, 55, 0.55); display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 10; }
+        .overlay[hidden] { display: none; }
+        .dialog { background: var(--white); width: 100%; max-width: 460px; padding: 2rem 1.5rem 1.5rem; max-height: 90vh; overflow: auto; }
+        .dialog h2 { margin-bottom: 0.5rem; }
+        .dialog p { margin-bottom: 1.25rem; }
+        .choices { display: grid; gap: 2px; }
+        .choice {
+            font: inherit; text-align: left; cursor: pointer; padding: 1rem 1.1rem; border: 0;
+            background: var(--bg-soft); color: var(--text-strong); display: flex; flex-direction: column; gap: 0.15rem;
+        }
+        .choice span { color: var(--text); font-size: 0.85rem; }
+        .choice:hover { background: #E6F5EE; }
+        .choice:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+        .step { display: grid; gap: 1rem; }
+        .step[hidden], .entry[hidden], .account[hidden] { display: none; }
+        .step-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
         @media (max-width: 640px) {
+            .entry-form { grid-template-columns: 1fr 1fr; }
+            .entry-form .btn { grid-column: 1 / -1; }
             .stats { grid-template-columns: 1fr 1fr 1fr; }
             .stat { padding: 1.1rem 0.75rem; }
             .stat-value { font-size: 1.5rem; }
@@ -165,6 +217,7 @@
     <header class="topbar">
         <div class="wrap">
             <div class="brand">PHSG <span>· Singen &amp; Begleiten üben</span></div>
+            <div class="account" id="account" hidden></div>
         </div>
     </header>
 
@@ -185,6 +238,25 @@
     </div>
 
     <main class="wrap">
+        <section id="entry-section" hidden>
+            <h2>Eintragen</h2>
+            <div class="entry">
+                <form class="entry-form" id="entry-form" novalidate>
+                    <label class="field">Minuten
+                        <input type="number" id="f-min" inputmode="numeric" min="0" max="600" step="1" placeholder="z. B. 20" required>
+                    </label>
+                    <label class="field">Einheiten
+                        <input type="number" id="f-units" inputmode="numeric" min="0" max="20" step="1" value="1" required>
+                    </label>
+                    <button class="btn" type="submit" id="f-submit">Eintragen</button>
+                </form>
+                <div class="msg" id="entry-msg" role="status"></div>
+                <div class="mine" id="mine" hidden>
+                    <div class="mine-title">Deine Einträge auf der Website diese Woche</div>
+                    <ul id="mine-list"></ul>
+                </div>
+            </div>
+        </section>
         <section>
             <h2>Podest</h2>
             <div class="podium" id="podium"></div>
@@ -207,6 +279,43 @@
         </section>
     </main>
 
+    <div class="overlay" id="welcome" hidden>
+        <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="w-title">
+            <div class="step" id="w-start">
+                <div>
+                    <h2 id="w-title">Willkommen</h2>
+                    <p>Wie möchtest du das Scoreboard nutzen?</p>
+                </div>
+                <div class="choices">
+                    <button class="choice" type="button" data-go="w-existing">Ich habe schon einen Namen<span>Aus der Liste auswählen</span></button>
+                    <button class="choice" type="button" data-go="w-new">Neuen Namen anlegen<span>Pseudonym wählen und loslegen</span></button>
+                    <button class="choice" type="button" id="w-watch">Nur zuschauen<span>Ohne Eintragen</span></button>
+                </div>
+            </div>
+            <form class="step" id="w-existing" hidden>
+                <h2>Dein Name</h2>
+                <label class="field">Name
+                    <select id="w-select" required></select>
+                </label>
+                <div class="step-actions">
+                    <button class="btn" type="submit">Weiter</button>
+                    <button class="btn ghost" type="button" data-go="w-start">Zurück</button>
+                </div>
+            </form>
+            <form class="step" id="w-new" hidden novalidate>
+                <h2>Neuer Name</h2>
+                <label class="field">Pseudonym (2–30 Zeichen)
+                    <input type="text" id="w-name" maxlength="30" autocomplete="off" required>
+                </label>
+                <div class="msg err" id="w-msg"></div>
+                <div class="step-actions">
+                    <button class="btn" type="submit" id="w-create">Anlegen</button>
+                    <button class="btn ghost" type="button" data-go="w-start">Zurück</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <footer>
         <div class="wrap">
             <span>Pädagogische Hochschule St.Gallen</span>
@@ -221,7 +330,13 @@
             return n;
         };
 
-        let lastData = null;
+        // Adresse des Cloudflare-Workers (leer = Eintragen ausgeschaltet, nur Excel-Daten)
+        const API_URL = '';
+
+        let lastData = null;   // zusammengeführt: Excel + Website
+        let excelData = null;
+        let webData = { entries: [], names: [] };
+        let webOk = false;
         let sortKey = 'minuten';
         const other = k => (k === 'minuten' ? 'einheiten' : 'minuten');
 
@@ -261,15 +376,208 @@
         }
 
         async function loadData() {
+            const excel = fetch('data.json?t=' + Date.now()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+            const web = API_URL ? fetch(API_URL + '/data', { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('API ' + r.status); return r.json(); }) : null;
             try {
-                const res = await fetch('data.json?t=' + Date.now());
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                lastData = await res.json();
-                render();
+                excelData = await excel;
             } catch (err) {
                 console.error(err);
                 document.getElementById('update-time').textContent = 'Daten konnten nicht geladen werden';
+                return;
             }
+            if (web) {
+                try { webData = await web; webOk = true; }
+                catch (err) { console.error(err); webOk = false; }
+            }
+            lastData = merge(excelData, webData);
+            render();
+            renderAccount();
+            renderMine();
+        }
+
+        // Excel + Website zusammenrechnen: gleicher Name = gleiche Person
+        function merge(excel, web) {
+            const names = [];
+            const add = n => { if (n && !names.includes(n)) names.push(n); };
+            excel.entries.forEach(e => add(e.name));
+            (web.names || []).forEach(add);
+            (web.entries || []).forEach(e => add(e.name));
+
+            const sum = (list, name, key) => list.filter(e => e.name === name).reduce((s, e) => s + e[key], 0);
+            const excelTotal = name => excel.entries.find(e => e.name === name) || { minuten: 0, einheiten: 0 };
+
+            const entries = names.map(name => ({
+                name,
+                minuten: excelTotal(name).minuten + sum(web.entries || [], name, 'minuten'),
+                einheiten: excelTotal(name).einheiten + sum(web.entries || [], name, 'einheiten'),
+            }));
+
+            const kws = (excel.weeks || []).map(w => w.kw);
+            (web.entries || []).forEach(e => { if (!kws.includes(e.kw)) kws.push(e.kw); });
+            const weeks = kws.map(kw => {
+                const ex = (excel.weeks || []).find(w => w.kw === kw);
+                const webWeek = (web.entries || []).filter(e => e.kw === kw);
+                return {
+                    kw,
+                    entries: names.map(name => {
+                        const x = ex && ex.entries.find(e => e.name === name);
+                        return {
+                            name,
+                            minuten: (x ? x.minuten : 0) + sum(webWeek, name, 'minuten'),
+                            einheiten: (x ? x.einheiten : 0) + sum(webWeek, name, 'einheiten'),
+                        };
+                    }),
+                };
+            });
+            return { updated_at: excel.updated_at, entries, weeks };
+        }
+
+        // ---------- Konto (wird nur auf diesem Gerät gespeichert) ----------
+        const store = {
+            get(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } },
+            set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} },
+        };
+        let me = store.get('msb-user', null);          // { mode: 'user' | 'watch', name }
+        let mine = store.get('msb-mine', {});          // { id: token } – eigene Website-Einträge
+
+        function allNames() {
+            return lastData ? lastData.entries.map(e => e.name).sort((a, b) => a.localeCompare(b, 'de')) : [];
+        }
+
+        function renderAccount() {
+            if (!API_URL) return;
+            const box = document.getElementById('account');
+            box.hidden = !me;
+            box.replaceChildren();
+            if (me) {
+                if (me.mode === 'user') { box.append('Als '); box.append(el('strong', '', me.name)); }
+                else box.append('Zuschauer');
+                const change = el('button', 'link-btn', 'ändern');
+                change.type = 'button';
+                change.addEventListener('click', openWelcome);
+                box.append(change);
+            }
+            document.getElementById('entry-section').hidden = !(me && me.mode === 'user');
+            if (me && me.mode === 'user') {
+                document.querySelector('#entry-section h2').textContent = 'Eintragen als ' + me.name + ' · KW' + isoWeek(new Date()).kw;
+                document.getElementById('f-submit').disabled = !webOk;
+                if (!webOk) showMsg('entry-msg', 'Eintragen ist gerade nicht erreichbar. Bitte später nochmals.', 'err');
+            }
+        }
+
+        function showStep(id) {
+            ['w-start', 'w-existing', 'w-new'].forEach(s => document.getElementById(s).hidden = s !== id);
+            if (id === 'w-existing') {
+                const sel = document.getElementById('w-select');
+                sel.replaceChildren(...allNames().map(n => { const o = el('option', '', n); o.value = n; return o; }));
+                if (me && me.name) sel.value = me.name;
+                sel.focus();
+            }
+            if (id === 'w-new') { document.getElementById('w-msg').textContent = ''; document.getElementById('w-name').focus(); }
+        }
+        function openWelcome() { document.getElementById('welcome').hidden = false; showStep('w-start'); }
+        function closeWelcome() { document.getElementById('welcome').hidden = true; }
+        function choose(user) { me = user; store.set('msb-user', me); closeWelcome(); renderAccount(); renderMine(); }
+
+        document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => showStep(b.dataset.go)));
+        document.getElementById('w-watch').addEventListener('click', () => choose({ mode: 'watch' }));
+        document.getElementById('w-existing').addEventListener('submit', ev => {
+            ev.preventDefault();
+            const name = document.getElementById('w-select').value;
+            if (name) choose({ mode: 'user', name });
+        });
+        document.getElementById('w-new').addEventListener('submit', async ev => {
+            ev.preventDefault();
+            const msg = document.getElementById('w-msg');
+            const name = document.getElementById('w-name').value.trim().replace(/\s+/g, ' ');
+            if (allNames().some(n => n.toLowerCase() === name.toLowerCase())) {
+                msg.textContent = 'Diesen Namen gibt es schon. Wähle ihn unter «Ich habe schon einen Namen».';
+                return;
+            }
+            const btn = document.getElementById('w-create');
+            btn.disabled = true;
+            try {
+                const res = await api('/names', { method: 'POST', body: JSON.stringify({ name }) });
+                await loadData();
+                choose({ mode: 'user', name: res.name });
+            } catch (err) {
+                msg.textContent = err.message;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        async function api(path, options = {}) {
+            const res = await fetch(API_URL + path, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(body.error || 'Fehler ' + res.status);
+            return body;
+        }
+
+        function showMsg(id, text, kind) {
+            const m = document.getElementById(id);
+            m.textContent = text;
+            m.className = 'msg' + (kind ? ' ' + kind : '');
+        }
+
+        // ---------- Eintragen ----------
+        document.getElementById('entry-form').addEventListener('submit', async ev => {
+            ev.preventDefault();
+            const minuten = Number(document.getElementById('f-min').value || 0);
+            const einheiten = Number(document.getElementById('f-units').value || 0);
+            if (!Number.isInteger(minuten) || !Number.isInteger(einheiten) || minuten < 0 || einheiten < 0) {
+                return showMsg('entry-msg', 'Bitte ganze Zahlen eintragen.', 'err');
+            }
+            if (minuten === 0 && einheiten === 0) return showMsg('entry-msg', 'Bitte Minuten oder Einheiten eintragen.', 'err');
+            const btn = document.getElementById('f-submit');
+            btn.disabled = true;
+            try {
+                const res = await api('/entries', { method: 'POST', body: JSON.stringify({ name: me.name, minuten, einheiten }) });
+                mine[res.id] = res.token;
+                store.set('msb-mine', mine);
+                document.getElementById('f-min').value = '';
+                document.getElementById('f-units').value = 1;
+                showMsg('entry-msg', 'Eingetragen: ' + minuten + ' min · ' + einheiten + (einheiten === 1 ? ' Einheit' : ' Einheiten'), 'ok');
+                await loadData();
+            } catch (err) {
+                showMsg('entry-msg', err.message, 'err');
+            } finally {
+                btn.disabled = !webOk;
+            }
+        });
+
+        // Eigene Website-Einträge dieser Woche (nur die von diesem Gerät, die man auch löschen darf)
+        function renderMine() {
+            const box = document.getElementById('mine');
+            const list = document.getElementById('mine-list');
+            const kw = isoWeek(new Date()).kw;
+            const own = (webData.entries || []).filter(e => mine[e.id] && e.kw === kw && me && e.name === me.name);
+            box.hidden = own.length === 0;
+            list.replaceChildren(...own.map(e => {
+                const li = el('li');
+                const when = new Date(e.created_at).toLocaleString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                li.append(el('span', '', when + ' · ' + e.minuten + ' min · ' + e.einheiten + (e.einheiten === 1 ? ' Einheit' : ' Einheiten')));
+                const del = el('button', 'link-btn', 'löschen');
+                del.type = 'button';
+                del.addEventListener('click', async () => {
+                    del.disabled = true;
+                    try {
+                        await api('/entries/' + e.id, { method: 'DELETE', headers: { 'X-Token': mine[e.id] } });
+                        delete mine[e.id];
+                        store.set('msb-mine', mine);
+                        showMsg('entry-msg', 'Eintrag gelöscht.', 'ok');
+                        await loadData();
+                    } catch (err) {
+                        showMsg('entry-msg', err.message, 'err');
+                        del.disabled = false;
+                    }
+                });
+                li.append(del);
+                return li;
+            }));
         }
 
         function render() {
@@ -389,7 +697,7 @@
             });
         }
 
-        loadData();
+        loadData().then(() => { if (API_URL && !me) openWelcome(); });
         setInterval(loadData, 60000);
     </script>
 </body>
