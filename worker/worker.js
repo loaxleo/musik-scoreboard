@@ -3,8 +3,9 @@
  * Cloudflare Worker mit D1-Datenbank (Binding-Name: DB)
  *
  *   GET    /data                 -> { entries: [...], names: [...] }   (öffentlich, ohne Token)
- *   GET    /excel[?fresh=1]      -> { updated_at, entries, weeks }  direkt aus der OneDrive-Excel
- *                                   (Variable EXCEL_URL = Freigabelink; ohne Variable: 404)
+ *   GET    /excel[?fresh=1]      -> { updated_at, entries, weeks }  direkt aus der Excel
+ *                                   Quelle: FLOW_URL (Power Automate, empfohlen) oder EXCEL_URL (Freigabelink)
+ *                                   ohne beide Variablen: 404 -> Website nimmt data.json
  *   POST   /entries              { name, minuten, einheiten } -> { id, token, week, kw }
  *   DELETE /entries/:id          Header "X-Token: <token>"     -> { ok: true }
  *   POST   /names                { name } -> { name }
@@ -60,15 +61,18 @@ export default {
 
       // ---------- Excel direkt aus OneDrive lesen ----------
       if (request.method === 'GET' && path === '/excel') {
-        if (!env.EXCEL_URL) return fail('EXCEL_URL ist nicht gesetzt.', 404);
+        if (!env.FLOW_URL && !env.EXCEL_URL) return fail('Keine Excel-Quelle eingerichtet.', 404);
         const fresh = url.searchParams.has('fresh');
         const cache = caches.default;
         const key = new Request('https://cache.local/excel');
-        if (!fresh) {
-          const hit = await cache.match(key);
-          if (hit) return json(await hit.json());
+        const hit = await cache.match(key);
+        if (hit) {
+          const cached = await hit.json();
+          // normal: 60 s aus dem Zwischenspeicher; "Aktualisieren": höchstens alle 15 s neu holen
+          if (!fresh || Date.now() - cached.fetched < 15_000) return json(cached);
         }
-        const data = await readExcel(env.EXCEL_URL);
+        const data = env.FLOW_URL ? await readFlow(env.FLOW_URL) : await readExcel(env.EXCEL_URL);
+        data.fetched = Date.now();
         // 60 s zwischenspeichern, damit OneDrive nicht bei jedem Seitenaufruf gefragt wird
         await cache.put(key, new Response(JSON.stringify(data), { headers: { 'Cache-Control': 'max-age=60' } }));
         return json(data);
@@ -221,7 +225,25 @@ async function readExcel(shareUrl) {
     (rows[row] ||= [])[col] = value;
   }
 
-  // gleiche Auswertung wie sync.py
+  const modified = res.headers.get('Last-Modified');
+  return evaluate(rows, modified ? new Date(modified) : new Date());
+}
+
+// Power Automate: Flow liest die Excel per Office Script und gibt alle Zellwerte als JSON zurück
+async function readFlow(flowUrl) {
+  const res = await fetch(flowUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const text = await res.text();
+  if (!res.ok) throw new Error('Power Automate antwortet nicht (HTTP ' + res.status + '): ' + text.slice(0, 200));
+  let rows = JSON.parse(text);
+  if (typeof rows === 'string') rows = JSON.parse(rows);       // falls doppelt verpackt
+  if (rows && !Array.isArray(rows)) rows = rows.result ?? rows.values ?? rows.body;
+  if (typeof rows === 'string') rows = JSON.parse(rows);
+  if (!Array.isArray(rows)) throw new Error('Unerwartete Antwort von Power Automate');
+  return evaluate(rows, new Date());
+}
+
+// gleiche Auswertung wie sync.py: Zeile 1 = Köpfe (KW..), Zeile 2 = M/E, ab Zeile 3 Daten
+function evaluate(rows, stamp) {
   const header = rows[0] || [];
   const weekCols = [];
   header.forEach((v, col) => {
@@ -239,8 +261,6 @@ async function readExcel(shareUrl) {
     weekCols.forEach((w, i) => weeks[i].entries.push({ name, minuten: num(r[w.col]), einheiten: num(r[w.col + 1]) }));
   }
 
-  const modified = res.headers.get('Last-Modified');
-  const stamp = modified ? new Date(modified) : new Date();
   return { updated_at: formatCH(stamp), entries, weeks, source: 'excel-live' };
 }
 
