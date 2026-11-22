@@ -21,8 +21,8 @@ EXCEL_PATH = Path(r"C:\Users\loale\OneDrive - PHSG\Shortcuts\High Score _Singen&
 REPO_PATH = Path(__file__).resolve().parent
 JSON_PATH = REPO_PATH / "data.json"
 LOG_PATH = REPO_PATH / "sync.log"
-POLL = 15    # alle 15 s nur den Zeitstempel der Excel anschauen (kostet nichts)
-QUIET = 120  # erst pushen, wenn die Excel 2 Minuten lang nicht mehr verändert wurde
+POLL = 10    # alle 10 s nur den Zeitstempel der Excel anschauen (kostet nichts)
+QUIET = 30   # pushen, sobald die Excel 30 s lang nicht mehr verändert wurde
 
 logging.basicConfig(
     level=logging.INFO,
@@ -131,7 +131,7 @@ def main():
             mtime = EXCEL_PATH.stat().st_mtime
             if mtime != last_mtime:
                 if last_mtime is not None and not pending:
-                    log.info("Excel wird bearbeitet – warte, bis 2 Minuten Ruhe ist")
+                    log.info("Excel wird bearbeitet – warte kurz")
                 last_mtime = mtime
                 changed_at = time.time()
                 pending = True

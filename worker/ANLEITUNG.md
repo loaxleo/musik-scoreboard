@@ -26,6 +26,22 @@ Oben im Worker steht die Adresse, z. B.
 Rufe sie mit `/data` am Ende im Browser auf. Es sollte `{"entries":[],"names":[]}` erscheinen.
 Dann die Adresse an Claude schicken. Claude trägt sie in `index.html` ein (`API_URL`) und pusht.
 
+## 5. Excel ohne Laptop lesen (optional, empfohlen)
+Damit liest der Worker die Excel direkt aus OneDrive – dein Laptop muss dafür nicht laufen.
+
+1. Die Excel in OneDrive/Teams öffnen → **Teilen** → **Linkeinstellungen**
+   → **Jeder mit dem Link** → **Kann anzeigen** → **Link kopieren**.
+   (Fehlt «Jeder mit dem Link», erlaubt die PHSG das nicht – dann bleibt es beim Laptop-Skript.)
+2. Im Worker **Edit code** → den neuen Inhalt von `worker.js` hineinkopieren → **Deploy**.
+3. Im Worker **Settings → Variables and Secrets → Add**
+   - Type: **Secret**
+   - Variable name: `EXCEL_URL`
+   - Value: der kopierte Link → **Deploy**
+4. Test: `https://musik-scoreboard-api.leonard-loacker.workers.dev/excel?fresh=1`
+   zeigt die Daten aus der Excel. Ab dann nimmt die Website automatisch diese Live-Daten.
+
+Ohne Schritt 5 (oder wenn OneDrive mal nicht antwortet) nimmt die Website automatisch die Daten vom Laptop-Skript.
+
 ## Gut zu wissen
 - **Löschen:** Jede Person kann ihre eigenen Website-Einträge löschen, und zwar auf dem Gerät, auf dem sie sie gemacht hat.
 - **Alles ansehen oder korrigieren:** D1 → `musik-scoreboard` → **Console**, z. B.
