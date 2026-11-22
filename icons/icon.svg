@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#009B56"/>
+  <!-- Podest: 2. / 1. / 3. -->
+  <rect x="140" y="292" width="72" height="88" fill="#FFFFFF"/>
+  <rect x="220" y="252" width="72" height="128" fill="#FFFFFF"/>
+  <rect x="300" y="322" width="72" height="58" fill="#FFFFFF"/>
+  <!-- Achtelnote über Platz 1 -->
+  <ellipse cx="243" cy="212" rx="25" ry="18" transform="rotate(-22 243 212)" fill="#FFFFFF"/>
+  <rect x="258" y="118" width="10" height="94" fill="#FFFFFF"/>
+  <path d="M268 118 C 272 146, 306 150, 300 190 C 296 166, 284 160, 268 158 Z" fill="#FFFFFF"/>
+</svg>
