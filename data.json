@@ -1,5 +1,5 @@
 {
-  "updated_at": "23.11.2026 09:35:30",
+  "updated_at": "23.11.2026 13:08:54",
   "entries": [
     {
       "name": "Lausbub80",
@@ -24,7 +24,7 @@
     {
       "name": "Gohan9",
       "minuten": 15,
-      "einheiten": 1
+      "einheiten": 3
     },
     {
       "name": "Obstsalat23",
@@ -173,8 +173,8 @@
         },
         {
           "name": "Gohan9",
-          "minuten": 0,
-          "einheiten": 0
+          "minuten": 20,
+          "einheiten": 1
         },
         {
           "name": "Obstsalat23",
@@ -223,8 +223,8 @@
         },
         {
           "name": "Gohan9",
-          "minuten": 0,
-          "einheiten": 0
+          "minuten": 15,
+          "einheiten": 1
         },
         {
           "name": "Obstsalat23",
